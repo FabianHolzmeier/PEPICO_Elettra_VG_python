@@ -10,9 +10,10 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import time
 
-# PATH = "B:\\analysis\\BSn\\PEPICO\\BSn_168\\"
-PATH = "B:\\analysis\\BSn\\PEPICO\\BSn_168_fac0.65\\"
-# PATH = "B:\\analysis\\tBMA\\PEPICO\\TBMA_088_tot\\"
+PATH = "B:\\analysis\\BSn\\PEPICO\\BSn_168_automatic_factor\\"
+# PATH = "B:\\analysis\\tBMA\\PEPICO\\TBMA_088_automatic_factor\\"
+# PATH = "B:\\analysis\\tBMA\\PEPICO\\TBMA_093_automatic_factor\\"
+# PATH = "B:\\analysis\\tBMA\\PEPICO\\TBMA_053_automatic_factor\\"
 
 ide = 'BSn_168'
 MaxTof = '9'
@@ -20,18 +21,20 @@ tof_bin = '2'
 x_step = '2'
 
 # work function in eV
-wf = 4.1
+wf = 4.13
 
 # reference PES (no coincidences)
+# path_ref = "B:\\analysis\\tBMA\PES\\"
+# file_ref = "calibrated_PES_TBMA_039.txt"
 path_ref = "B:\\VG\\rawdata\\"
-file_ref = "BSn_165Sum"
-DT_on = 1           # was the reference PES recorded with drift tube on?
+file_ref = "BSn_160Sum"
 
-px2eV = 0.85        # calibration factor px to eV
+DT_on = 1           # was the reference PES recorded with drift tube on?
+px2eV = 0.085        # calibration factor px to eV
 DT_shift = 0.6      # energy shift with drift tube on (eV)
 
 
-# kinetic energies at which the measurement was done (eV) are retrieved automatically
+# kinetic energies at which the measurements were done (eV) are retrieved automatically
 path_en = "B:\\PEPICO\\rawdata\\"
 file_en = "Energy_"+ide+".txt"
 energy = np.loadtxt(path_en+file_en, skiprows=1, usecols=(2))
@@ -59,13 +62,16 @@ print("loaded all PEPICO matrices           "+str(time.ctime()))
 # load reference
 ref = np.loadtxt(path_ref+file_ref,skiprows=25)
 
-#%% plot spectrum integrated over all masses for each KE and compare to PES
+# improved energy calibration on N2 spectrum
+ref[:,0]  = 92-(92-ref[:,0]*0.9775) 
+central_en = 92-(92-central_en*0.9775)
 
+#%% plot spectrum integrated over all masses for each KE and compare to PES
 
 xx = np.zeros((comb_m.shape[0],len(central_en)))
 
-for i in range(len(files)):
-    xx[:,i] = np.arange(comb_m.shape[0]/2,-comb_m.shape[0]/2,-1)*0.085+central_en[i]-DT_shift-wf
+for i in range(len(central_en)):
+    xx[:,i] = np.arange(comb_m.shape[0]/2,-comb_m.shape[0]/2,-1)*px2eV+central_en[i]-DT_shift-wf 
 
 fig,ax = plt.subplots()
 ax.plot(ref[:,0]-(DT_shift*DT_on)-wf,ref[:,1],'k')
@@ -82,10 +88,10 @@ ax2.set_ylabel('PEPICO counts')
 #%% add all PEPICO matrices together to obtain final result
 
 # energy points to cut on the high energy side for each KE (MCP prob)
-cut = 2
+cut = 1
 
 # maximum intensity in TOF matrix
-z_max = 5
+z_max = 2
 
 # make new energy axis with spacing en_step in eV
 en_step = 0.1
@@ -122,7 +128,7 @@ gs = GridSpec(4,4,figure=fig)
 ax = fig.add_subplot(gs[:3,:])
 ax2 = fig.add_subplot(gs[3,:],sharex = ax)
 
-ax.pcolor(x,y,res.T,shading='auto',cmap='jet',vmin=0,vmax=z_max)
+ax.pcolor(x,y,res.T,shading='auto',cmap='gist_earth_r',vmin=0,vmax=z_max)
 ax.set_xlim([min(en_new)-2,max(en_new)+2])
 ax.set_ylim([0,float(MaxTof)])
 plt.setp(ax.get_xticklabels(), visible=False)
