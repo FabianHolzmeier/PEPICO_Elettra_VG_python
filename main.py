@@ -24,12 +24,15 @@ VG_figures = VG_figures()
 VG_Movie_Tof = VG_Movie_Tof()
 
 # directory with the .mat files to be analyzed
-PATH = "B:\\PEPICO\\rawdata\\BSn_157\\KE9\\"
+# PATH = "B:\\PEPICO\\rawdata\\BSn_157\\KE1\\"
+PATH = "B:\\PEPICO\\rawdata\\BSn_168\\KE9\\"
 group = "KE9"
 
 MaxTof = 9                                      # TOF range in microseconds
 show_singles = 1                                # show histograms of singles                
 show_doubles = 0                                # show histograms of doubles (for future release)
+
+bg = [1.0, 2.0]                                 # background region in the TOF in microseconds
 
 # results_folder
 path_res = "B:\\analysis\\BSn\\"
@@ -206,7 +209,7 @@ All_Start_ID_8, All_Tof8, All_Tof2_Start, All_Start_ID_2, All_Tof2 = VG_Tof_only
 
 # histograms of all ions (Tof 2) and of triggers by anode or pulser (Tof 8) 
 
-int_lim,pulser_starts = VG_figures.ion_hist(All_Tof2,All_Tof8,MaxTof)
+int_lim,pulser_starts, anode_starts = VG_figures.ion_hist(All_Tof2,All_Tof8,MaxTof)
 
 # Correlate ions to start from anode or pulser
 First_Tof2_Start,First_Tof2,First_Start_ID_2, Second_Tof2_Start,Second_Tof2,Second_Start_ID_2 = VG_Tof_only.first_second(int_lim[0],int_lim[1],int_lim[2],int_lim[3])
@@ -215,9 +218,11 @@ First_Tof2_Start,First_Tof2,First_Start_ID_2, Second_Tof2_Start,Second_Tof2,Seco
 
 bin_size = 2            # bin size in ns
 
+# bg = [7.5, 8.5]       # change background by manually
+
 First_STof_Hist = VG_Tof_only.Fst_single_tof(MaxTof*1000,bin_size)
 Second_STof_Hist =  VG_Tof_only.Snd_single_tof(MaxTof*1000,bin_size)
-VG_figures.STof(First_STof_Hist,Second_STof_Hist)
+bg_ch = VG_figures.STof(First_STof_Hist,Second_STof_Hist,bg)
 
 #%% coincidences
 
@@ -228,7 +233,12 @@ ymin,ymax = 20,65       # y limits
 VG_Movie_Tof.ROI(xmin,xmax,x_step,ymin,ymax,MaxTof*1000,bin_size)
 
 # factor for subtraction of randoms
-fac = 0.65
+# fac = 0.65
+# automatic factor determination from background (2 March 2022, FH)
+fac = (np.sum(First_STof_Hist[0][bg_ch[0]:bg_ch[1]])/anode_starts)/(np.sum(Second_STof_Hist[0][bg_ch[0]:bg_ch[1]])/pulser_starts)
+print("factor = {:.3f}".format(fac))
+
+
 
 # test MXY
 MXYSingles_ch4,MXYch4_hist = VG_Movie_Tof.show_singlesMXY(All_TX_4,All_TS_4_Order,All_X_4,All_Y_4,xmin,xmax)
@@ -258,7 +268,6 @@ run_time = time.time()-start_t
 print()
 print("analysis finished after {:.1f} min".format(run_time/60))
 print(str(time.ctime()))
-
 
 
 
