@@ -75,17 +75,24 @@ class VG_figures:
         # return integration limits for future use
         int_limits = [All_Tof8_hist[1][peaks[0]-5],All_Tof8_hist[1][peaks[0]+5],All_Tof8_hist[1][peaks[1]-5],All_Tof8_hist[1][peaks[1]+5]]
         
-        return int_limits, pulser_starts
+        return int_limits, pulser_starts, anode_starts
     
-    def STof(self,first_tof,second_tof):
+    def STof(self,first_tof,second_tof,bg):
+        
+        #% background range in channels
+        bg_ch = [np.min(np.where(first_tof[1]>bg[0]*1e6)), np.min(np.where(first_tof[1]>bg[1]*1e6))]
         
         fig,(ax1,ax2) = plt.subplots(2,1)
         ax1.plot(first_tof[1][:-1]/1e6,first_tof[0],'k-')
+        ax1.plot(first_tof[1][bg_ch[0]:bg_ch[1]]/1e6,first_tof[0][bg_ch[0]:bg_ch[1]],'r-')
         ax1.legend(['anode'])
         ax1.set_title("TOF from anode and pulser")
         ax2.plot(second_tof[1][:-1]/1e6,second_tof[0],'k-')
+        ax2.plot(second_tof[1][bg_ch[0]:bg_ch[1]]/1e6,second_tof[0][bg_ch[0]:bg_ch[1]],'r-')
         ax2.legend(['pulser'])
         ax2.set_xlabel('TOF ($\mu$s)')
+        
+        return bg_ch
         
     def PEPICO_matrix(self,res,MaxTof,xmin,xmax,x_step,path,file):
         
